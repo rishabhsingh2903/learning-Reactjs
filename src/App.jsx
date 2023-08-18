@@ -1,42 +1,51 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import {FormSub} from "./FormSub"
+import { TodoList } from "./TodoList"
 import "./style.css"
 export default function App (){
-  const [newItem,setNewItem]=useState("")
-  const [todos,setTodos]=useState([])
+  
+  const [todos,setTodos]=useState(()=>{
+    const localvalue=localStorage.getItem("ITEMS")
+    if(localvalue== null) return []
+    return JSON.parse(localvalue)
+  })
+  useEffect(()=>{
+    localStorage.setItem("ITEMS",JSON.stringify(todos))
+  },[todos])
 
-  function handleSubmit(e){
-    e.preventDefault()
+
+  function addTodo(title){
+            setTodos(currentTodos=>{
+          return [...currentTodos,{id:crypto.randomUUID(),
+            title,
+             completed:false},
+            ]
+        })
+  }
+
+  function toggleTodo(id,completed){
     setTodos(currentTodos=>{
-      return [...currentTodos,{id:crypto.randomUUID(),
-        title:newItem,
-         completed:false},
-        ]
+       return currentTodos.map(todo=>{
+          if (todo.id===id){
+            return {...todo,completed}
+          }
+          return todo
+        })
+      }
+    )
+  }
+
+  function deleteTodo(id){
+    setTodos(currentTodos=>{
+      return currentTodos.filter(todo=>todo.id!==id)
     })
-  setNewItem('')     
-}
+  }
   return (
   <>
     
-    <form onSubmit={handleSubmit} className='new-item-form'>
-    <div className="form-row">
-        <label htmlFor="item">New Item</label>
-        <input value={newItem} onChange={e =>setNewItem(e.target.value)} type="text" id="item" />
-    </div>
-    <button className="btn">add</button>
-    </form>
+    <FormSub onsubmit={addTodo}/>
     <h1 className='header'>TODO LIST</h1>
-    <ul className="list">
-      {todos.map(todo=>{
-        return (<li key={todo}>
-          <label>
-            <input type="checkbox" checked={todo.completed}/>
-            {todo.title}
-          </label>
-          <button className='btn btn-danger'>Delete</button>
-        </li>   
-        )     
-      })}
-    </ul>  
+    <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo}/>
   </>
   )
 }
